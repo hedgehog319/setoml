@@ -73,7 +73,10 @@ class Settings:
                 )
 
             if is_subsettings(value_type, f.type):
-                value = f.type().model_validate(value)
+                if not isinstance(f.default, f.type):
+                    value = f.type().model_validate(value)
+                else:
+                    value = f.default.model_validate(value)
 
             setattr(self, f.name, value)
 
