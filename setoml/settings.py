@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from dataclasses import dataclass, field, is_dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
 from typing_extensions import Self
@@ -11,13 +11,13 @@ from setoml.compat import toml_load
 
 @dataclass(repr=False)
 class Settings:
-    app_name: str | None = field(default=None, repr=False)
+    app_name: str | None = None
 
-    file_names: Iterable[str] | str = field(default="settings.toml", repr=False)
-    secret_names: Iterable[str] | str | None = field(default=None, repr=False)
+    file_names: Iterable[str] | str = "settings.toml"
+    secret_names: Iterable[str] | str | None = None
 
-    skip_extras: bool = field(default=True, repr=False)
-    skip_missing_files: bool = field(default=False, repr=False)
+    skip_extras: bool = True
+    skip_missing_files: bool = False
 
     _ignore_fields: ClassVar[set[str]] = field(
         default={
