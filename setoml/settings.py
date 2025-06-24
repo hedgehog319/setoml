@@ -33,7 +33,20 @@ class Settings:
     def __post_init__(self) -> None:
         self.settings_root = self.get_settings_root()
 
-        self.load()
+    def __set_name__(self, owner: type[Any], name: str):
+        if not issubclass(owner, Settings):
+            return
+
+        self.app_name = name
+
+    def __get__(self, instance: Any, owner: type):
+        if instance is None:
+            return self
+
+        if self.app_name not in instance.__dict__:
+            instance.__dict__[self.app_name] = self
+
+        return self
 
     def get_settings_root(self) -> Path:
         return Path.cwd()
@@ -87,7 +100,7 @@ class Settings:
         settings = toml_load(filepath)
         return settings
 
-    def load(self) -> None:
+    def load(self) -> Self:
         self.files_existence()
 
         settings = {}
@@ -99,7 +112,7 @@ class Settings:
 
             settings.update(toml)
 
-        self.model_validate(settings)
+        return self.model_validate(settings)
 
     def __repr__(self) -> str:
         text = (
