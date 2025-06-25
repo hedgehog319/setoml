@@ -85,27 +85,39 @@ class Settings:
             raise Exception(message)
 
     def model_validate(self, obj: Any) -> Self:
+        if not obj:
+            for f in get_fields(self):
+                if f.default is None and not is_optional(f.type):
+                    raise Exception(f"Not set setting {f.name}")
+
+            return self
+
         for f in get_fields(self):
             if f.name in Settings._ignore_fields:
                 continue
 
-            if (
-                f.default is None
-                and not is_optional(f.type)
-                and not obj.get(f.name, None)
-            ):
-                raise Exception(f"Not set setting {f.name}")
-
             value = obj.get(f.name, f.default)
             value_type = type(value)
 
+            _is_subsettings = is_subsettings(value_type, f.type) or (
+                value is None and issubclass(f.type, Settings)
+            )
+
+            if (
+                f.default is None
+                and not is_optional(f.type)
+                and f.name not in obj
+                and not _is_subsettings
+            ):
+                raise Exception(f"Not set setting {f.name}")
+
             # REDO:
-            if not type_validate(value_type, f.type):
+            if not (type_validate(value_type, f.type) or _is_subsettings):
                 raise TypeError(
                     f"Field `{f.name}` expected type `{f.type}` but get `{value_type}`"
                 )
 
-            if is_subsettings(value_type, f.type):
+            if _is_subsettings:
                 if not isinstance(f.default, f.type):
                     value = f.type().model_validate(value)
                 else:
