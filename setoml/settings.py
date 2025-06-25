@@ -1,7 +1,6 @@
 from collections.abc import Iterable
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeAlias
 from typing_extensions import Self
 
 from setoml.utils import get_fields, is_optional, is_subsettings, type_validate
@@ -9,42 +8,55 @@ from setoml.utils import get_fields, is_optional, is_subsettings, type_validate
 from setoml.compat import toml_load
 
 
-@dataclass(repr=False)
+FileNamesType: TypeAlias = Iterable[str] | str
+
+
 class Settings:
-    app_name: str | None = None
+    _app_name: str | None
 
-    file_names: Iterable[str] | str = "settings.toml"
-    secret_names: Iterable[str] | str | None = None
+    _file_names: Iterable[Path]
+    _secret_names: Iterable[Path]
 
-    skip_extras: bool = True
-    skip_missing_files: bool = False
+    _skip_extras: bool
 
-    _ignore_fields: ClassVar[set[str]] = field(
-        default={
-            "app_name",
-            "file_names",
-            "secret_names",
-            "skip_extras",
-            "skip_missing_files",
-            "_ignore_fields",
-        }
-    )
+    _ignore_fields: set[str] = {
+        "_app_name",
+        "_file_names",
+        "_secret_names",
+        "_skip_extras",
+        "_ignore_fields",
+    }
 
-    def __post_init__(self) -> None:
-        self.settings_root = self.get_settings_root()
+    def __init__(
+        self,
+        app_name: str | None = None,
+        file_names: FileNamesType = "settings.toml",
+        secret_names: FileNamesType | None = None,
+        skip_extras: bool = True,
+    ) -> None:
+        self._app_name = app_name
+        if isinstance(file_names, str):
+            file_names = [file_names]
+
+        root = self.get_settings_root()
+        self._file_names = list(map(lambda x: root / x, file_names))
+        self._secret_names = list(map(lambda x: root / x, secret_names or []))
+        self._skip_extras = skip_extras
+
+        self.files_existence()
 
     def __set_name__(self, owner: type[Any], name: str):
         if not issubclass(owner, Settings):
             return
 
-        self.app_name = name
+        self._app_name = name
 
     def __get__(self, instance: Any, owner: type):
         if instance is None:
             return self
 
-        if self.app_name not in instance.__dict__:
-            instance.__dict__[self.app_name] = self
+        if self._app_name not in instance.__dict__:
+            instance.__dict__[self._app_name] = self
 
         return self
 
@@ -52,8 +64,6 @@ class Settings:
         return Path.cwd()
 
     def files_existence(self) -> None:
-        if self.skip_missing_files:
-            return
 
         if isinstance(self.file_names, str):
             self.file_names = [self.file_names]
@@ -105,10 +115,10 @@ class Settings:
 
         settings = {}
 
-        for file in map(Path, self.file_names):
+        for file in map(Path, self._file_names):
             toml = toml_load(file)
-            if self.app_name:
-                toml = toml[self.app_name]
+            if self._app_name:
+                toml = toml[self._app_name]
 
             settings.update(toml)
 
