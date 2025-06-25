@@ -64,15 +64,25 @@ class Settings:
         return Path.cwd()
 
     def files_existence(self) -> None:
+        error_settings = [
+            fname for fname in self._file_names if not Path(fname).exists()
+        ]
+        error_secrets = [
+            fname for fname in self._secret_names if not Path(fname).exists()
+        ]
 
-        if isinstance(self.file_names, str):
-            self.file_names = [self.file_names]
-        error_names = [fname for fname in self.file_names if not Path(fname).exists()]
+        message = ""
 
-        if error_names:
-            raise Exception(
-                f"Next files not found: {error_names}"
-            )  # REDO: Change message
+        if error_settings:
+            message += f"Next setting files not found: {error_settings}\n"  # REDO: message text
+
+        if error_secrets:
+            message += (
+                f"Next secret files not found: {error_secrets}"  # REDO: message text
+            )
+
+        if message:
+            raise Exception(message)
 
     def model_validate(self, obj: Any) -> Self:
         for f in get_fields(self):
