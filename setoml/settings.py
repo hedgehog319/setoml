@@ -43,20 +43,7 @@ class Settings:
 
         self.files_existence()
 
-    def __set_name__(self, owner: type[Any], name: str):
-        if not issubclass(owner, Settings):
-            return
 
-        self._app_name = name
-
-    def __get__(self, instance: Any, owner: type):
-        if instance is None:
-            return self
-
-        if self._app_name not in instance.__dict__:
-            instance.__dict__[self._app_name] = self
-
-        return self
 
     def get_settings_root(self) -> Path:
         return Path.cwd()
