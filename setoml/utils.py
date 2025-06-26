@@ -1,14 +1,7 @@
 import inspect
-from dataclasses import dataclass
 from types import NoneType
 from typing import Any, Type, get_args, get_origin
-
-
-@dataclass(frozen=True)
-class Field:
-    name: str
-    default: Any
-    type: Any
+from setoml.field import Field, UndefinedField
 
 
 def _flat_annotations(cls: Type[Any]) -> tuple[Any, ...]:
@@ -37,7 +30,7 @@ def get_fields(obj: Any) -> tuple[Field, ...]:
     return tuple(
         Field(
             name=name,
-            default=getattr(obj, name, None),
+            default=getattr(obj, name, UndefinedField),
             type=type_,
         )
         for name, type_ in _collect_annotations(cls).items()
@@ -45,14 +38,22 @@ def get_fields(obj: Any) -> tuple[Field, ...]:
     )
 
 
-def is_optional(annotation: Any) -> bool:
+def is_optional(field: Field) -> bool:
     """
     Detects Optional types, i.e., Union[..., NoneType].
     """
-    return any(annot in (None, NoneType) for annot in _flat_annotations(annotation))
+    return any(annot in (None, NoneType) for annot in _flat_annotations(field.type))
 
 
-def is_subsettings(type_: Type[Any], annotation: Any) -> bool:
+def is_subsettings(value: Any, type_: type) -> bool:
+    from setoml import Settings
+
+    return any(issubclass(a, Settings) for a in _flat_annotations(type_)) and (
+        value is UndefinedField or type(value) is dict
+    )
+
+
+def is_subsettings_old(type_: Type[Any], annotation: Any) -> bool:
     from setoml import Settings  # CHECK: can it be removed from here?
 
     if type_ is not dict or type_ in (None, NoneType):
