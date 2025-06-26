@@ -1,18 +1,15 @@
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, TypeAlias
-from typing_extensions import Self
 
+
+from setoml.compat import toml_load
+from setoml.field import UndefinedField
 from setoml.utils import (
     get_fields,
     is_optional,
     is_subsettings,
-    type_validate,
-    _flat_annotations,
 )
-
-from setoml.compat import toml_load
-
 
 FileNamesType: TypeAlias = Iterable[str] | str
 
@@ -32,6 +29,7 @@ class Settings:
         secret_names: FileNamesType | None = None,
         skip_extras: bool = True,
         settings_root: str | None = None,
+        **kwargs: dict[str, Any],
     ) -> None:
         self._app_name = app_name
         if isinstance(file_names, str):
@@ -42,8 +40,11 @@ class Settings:
         self._secret_names = list(map(lambda x: root / x, secret_names or []))
         self._skip_extras = skip_extras
 
-        self.files_existence()
+        settings = kwargs.get("_settings_dict", self._load_tomls(self._file_names))
+        if self._app_name:
+            settings = settings.get(self._app_name, {})
 
+        self.model_validate(settings)
 
     def get_settings_root(self, root: str | None) -> Path:
         if not root:
@@ -51,91 +52,39 @@ class Settings:
 
         return Path(root)
 
-    def files_existence(self) -> None:
-        error_settings = [
-            fname for fname in self._file_names if not Path(fname).exists()
-        ]
-        error_secrets = [
-            fname for fname in self._secret_names if not Path(fname).exists()
-        ]
+    def __init_subclass__(cls) -> None:
+        cls._fields = tuple(f.name for f in get_fields(cls))
 
-        message = ""
-
-        if error_settings:
-            message += f"Next setting files not found: {error_settings}\n"  # REDO: message text
-
-        if error_secrets:
-            message += (
-                f"Next secret files not found: {error_secrets}"  # REDO: message text
-            )
-
-        if message:
-            raise Exception(message)
-
-    def model_validate(self, obj: Any) -> Self:
-        if not obj:
-            for f in get_fields(self):
-                if f.default is None and not is_optional(f.type):
-                    raise Exception(f"Not set setting {f.name}")
-
-            return self
-
-        for f in get_fields(self):
-            value = obj.get(f.name, f.default)
-            value_type = type(value)
-
-            _is_subsettings = is_subsettings(value_type, f.type) or (
-                value is None and Settings in _flat_annotations(f.type)
-            )
-
-            if (
-                f.default is None
-                and not is_optional(f.type)
-                and f.name not in obj
-                and not _is_subsettings
-            ):
-                raise Exception(f"Not set setting {f.name}")
-
-            # REDO:
-            if not (type_validate(value_type, f.type) or _is_subsettings):
-                raise TypeError(
-                    f"Field `{f.name}` expected type `{f.type}` but get `{value_type}`"
-                )
-
-            if _is_subsettings:
-                if not isinstance(f.default, f.type):
-                    value = f.type(app_name=f.name).model_validate(value)
-                else:
-                    value = f.default.model_validate(value)
-
-            setattr(self, f.name, value)
-
-        return self
-
-    def load_single(self, filepath: Path) -> dict:
-        # TODO: error handling
-        settings = toml_load(filepath)
+    def _load_tomls(self, files: Iterable[Path]) -> dict[str, Any]:
+        settings = {}
+        for file in files:
+            settings.update(toml_load(file))
         return settings
 
-    def load(self) -> Self:
-        self.files_existence()
+    def model_validate(self, settings: dict):
+        for field in get_fields(self):
+            value = settings.get(field.name, field.default)
+            if is_subsettings(value, field.type) and field.default is UndefinedField:
+                setattr(
+                    self,
+                    field.name,
+                    field.type(_settings_dict=value),
+                )
 
-        settings = {}
-
-        for file in map(Path, self._file_names):
-            toml = toml_load(file)
-            if self._app_name:
-                toml = toml[self._app_name]
-
-            settings.update(toml)
-
-        return self.model_validate(settings)
+            else:
+                if (
+                    not is_optional(field)
+                    and field.default is UndefinedField
+                    and field.name not in settings
+                ):
+                    raise Exception(f"Нет ключа {field.name}")
+                setattr(self, field.name, value)
 
     def __repr__(self) -> str:
         text = (
             f"{self.__class__.__qualname__}"
             + "("
-            + ", ".join([f"{f.name}={f.default!r}" for f in get_fields(self)])
+            + ", ".join([f"{name}={getattr(self, name)!r}" for name in self._fields])
             + ")"
         )
 
