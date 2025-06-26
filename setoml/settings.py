@@ -31,12 +31,13 @@ class Settings:
         file_names: FileNamesType = "settings.toml",
         secret_names: FileNamesType | None = None,
         skip_extras: bool = True,
+        settings_root: str | None = None,
     ) -> None:
         self._app_name = app_name
         if isinstance(file_names, str):
             file_names = [file_names]
 
-        root = self.get_settings_root()
+        root = self.get_settings_root(settings_root)
         self._file_names = list(map(lambda x: root / x, file_names))
         self._secret_names = list(map(lambda x: root / x, secret_names or []))
         self._skip_extras = skip_extras
@@ -44,9 +45,11 @@ class Settings:
         self.files_existence()
 
 
+    def get_settings_root(self, root: str | None) -> Path:
+        if not root:
+            return Path.cwd()
 
-    def get_settings_root(self) -> Path:
-        return Path.cwd()
+        return Path(root)
 
     def files_existence(self) -> None:
         error_settings = [
