@@ -114,7 +114,7 @@ class Settings:
 
             if _is_subsettings:
                 if not isinstance(f.default, f.type):
-                    value = f.type().model_validate(value)
+                    value = f.type(app_name=f.name).model_validate(value)
                 else:
                     value = f.default.model_validate(value)
 
