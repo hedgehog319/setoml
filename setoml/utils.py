@@ -49,8 +49,7 @@ def is_optional(annotation: Any) -> bool:
     """
     Detects Optional types, i.e., Union[..., NoneType].
     """
-    flat = _flat_annotations(annotation)
-    return any(annot in (None, NoneType) for annot in flat)
+    return any(annot in (None, NoneType) for annot in _flat_annotations(annotation))
 
 
 def is_subsettings(type_: Type[Any], annotation: Any) -> bool:
