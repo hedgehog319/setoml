@@ -43,5 +43,5 @@ def test_cusom_app_name():
     class S(Settings):
         p: int
 
-    s = S(app_name='custom_app_name', file_names='tests/files/basic.toml')
+    s = S(app_name='custom_app_name', file_names='tests/files/basic.toml').load()
     assert s.p == 1
