@@ -1,0 +1,13 @@
+p1 = 1
+no_in_settings_class = 0
+
+p_str = "value"
+p_int = 1
+p_float = 7.4
+p_bool = true
+p_date = 1979-05-27T07:32:00
+p_array = [[1, 2], ["a", "b", "c"]]
+p_table = { x = 1, y = 2 }
+
+[custom_app_name]
+p = 1
