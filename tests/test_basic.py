@@ -3,7 +3,7 @@ from datetime import datetime
 from setoml.settings import Settings
 
 
-def test_attr_filling():
+def test_fields_filling():
     class S(Settings):
         p1: int = 0  # must be overwriten
         p2: int = 0  # has default value
@@ -39,7 +39,7 @@ def test_toml_types():
     S(file_names='tests/files/basic.toml').load()
 
 
-def test_app_name():
+def test_cusom_app_name():
     class S(Settings):
         p: int
 
