@@ -1,9 +1,15 @@
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, TypeAlias
 from typing_extensions import Self
 
-from setoml.utils import get_fields, is_optional, is_subsettings, type_validate
+from setoml.utils import (
+    get_fields,
+    is_optional,
+    is_subsettings,
+    type_validate,
+    _flat_annotations,
+)
 
 from setoml.compat import toml_load
 
@@ -100,7 +106,7 @@ class Settings:
             value_type = type(value)
 
             _is_subsettings = is_subsettings(value_type, f.type) or (
-                value is None and issubclass(f.type, Settings)
+                value is None and Settings in _flat_annotations(f.type)
             )
 
             if (
