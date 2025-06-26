@@ -25,14 +25,6 @@ class Settings:
 
     _skip_extras: bool
 
-    _ignore_fields: set[str] = {
-        "_app_name",
-        "_file_names",
-        "_secret_names",
-        "_skip_extras",
-        "_ignore_fields",
-    }
-
     def __init__(
         self,
         app_name: str | None = None,
@@ -99,9 +91,6 @@ class Settings:
             return self
 
         for f in get_fields(self):
-            if f.name in Settings._ignore_fields:
-                continue
-
             value = obj.get(f.name, f.default)
             value_type = type(value)
 
@@ -156,13 +145,7 @@ class Settings:
         text = (
             f"{self.__class__.__qualname__}"
             + "("
-            + ", ".join(
-                [
-                    f"{f.name}={f.default!r}"
-                    for f in get_fields(self)
-                    if f.name not in Settings._ignore_fields
-                ]
-            )
+            + ", ".join([f"{f.name}={f.default!r}" for f in get_fields(self)])
             + ")"
         )
 
