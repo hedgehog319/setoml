@@ -1,7 +1,7 @@
 import inspect
 from dataclasses import dataclass
 from types import NoneType
-from typing import Any, Type, get_args, get_origin, get_type_hints
+from typing import Any, Type, get_args, get_origin
 
 
 @dataclass(frozen=True)
@@ -17,14 +17,15 @@ def _flat_annotations(cls: Type[Any]) -> tuple[Any, ...]:
     return tuple(annot for arg in get_args(cls) for annot in _flat_annotations(arg))
 
 
-def _collect_annotations(cls: Type) -> dict[str, Any]:
+def _collect_annotations(cls: type) -> dict[str, Any]:
     """
     Collects and merges type hints from cls and its base classes (excluding 'object').
     """
-    hints: dict[str, Any] = {}
-    for base in reversed(inspect.getmro(cls)[:-1]):
-        hints.update(get_type_hints(base, include_extras=False))
-    return hints
+    return {
+        k: v
+        for base in reversed(inspect.getmro(cls)[:-2])
+        for k, v in inspect.get_annotations(base).items()
+    }
 
 
 def get_fields(obj: Any) -> tuple[Field, ...]:
