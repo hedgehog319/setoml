@@ -1,6 +1,7 @@
 import inspect
 from types import NoneType
 from typing import Any, Type, get_args, get_origin
+
 from setoml.field import Field, UndefinedField
 
 
@@ -26,7 +27,7 @@ def get_fields(obj: Any) -> tuple[Field, ...]:
     Retrieves annotated fields of an object or its class,
     preserving MRO order and providing default values.
     """
-    cls = obj if isinstance(obj, type) else obj.__class__
+    cls = obj if isinstance(obj, type) else type(obj)
     return tuple(
         Field(
             name=name,
@@ -45,39 +46,9 @@ def is_optional(field: Field) -> bool:
     return any(annot in (None, NoneType) for annot in _flat_annotations(field.type))
 
 
-def is_subsettings(value: Any, type_: type) -> bool:
+def is_subsetting(value: Any, type_: type) -> bool:
     from setoml import Settings
 
     return any(issubclass(a, Settings) for a in _flat_annotations(type_)) and (
-        value is UndefinedField or type(value) is dict
+        value is UndefinedField or isinstance(value, (dict, Settings))
     )
-
-
-def is_subsettings_old(type_: Type[Any], annotation: Any) -> bool:
-    from setoml import Settings  # CHECK: can it be removed from here?
-
-    if type_ is not dict or type_ in (None, NoneType):
-        return False
-
-    return any(
-        isinstance(arg, type) and issubclass(arg, Settings)
-        for arg in _flat_annotations(annotation)
-    )
-
-
-def type_validate(val_type: Type, annotation: Any) -> bool:
-    """
-    Validates whether 'annotation' allows 'val_type'.
-    Supports direct comparison, dict-of-Settings, and Unions.
-    """
-    from setoml import Settings
-
-    if val_type is annotation:
-        return True
-    if val_type is dict and issubclass(annotation, Settings):
-        return True
-
-    # CHECK: maybe not only Union
-    if get_origin(annotation):
-        return any(type_validate(val_type, arg) for arg in get_args(annotation))
-    return False
