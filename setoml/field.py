@@ -15,11 +15,8 @@ class _UndefinedField:
 UndefinedField = _UndefinedField()
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, repr=True)
 class Field:
     name: str
     default: Any
     type: Any
-
-
-__all__ = ["Field", "UndefinedField"]
