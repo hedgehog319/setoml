@@ -29,10 +29,32 @@ class SettingsSource(ABC):
                         f"Settings file not found {file}"
                     )
 
-            cls._cache[hash] = {
-                k: v for file in paths for k, v in cls.parse_file(file).items()
+            settings = {
+                k: v
+                for file in setting_files or ()
+                for k, v in cls.parse_file(file).items()
             }
+            secrets = {
+                k: v
+                for file in secret_files or ()
+                for k, v in cls.parse_file(file).items()
+            }
+
+            cls._cache[hash] = cls.merge(settings, secrets)
         return cls._cache[hash]
+
+    @classmethod
+    def merge(cls, settings: dict[str, Any], secrets: dict[str, Any]):
+        for key, value in secrets.items():
+            if (
+                key in settings
+                and isinstance(settings[key], dict)
+                and isinstance(value, dict)
+            ):
+                cls.merge(settings[key], value)
+            else:
+                settings[key] = value
+        return settings
 
     @classmethod
     @abstractmethod
