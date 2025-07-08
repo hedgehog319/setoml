@@ -3,11 +3,11 @@ from datetime import datetime
 import pytest
 
 from setoml.field import UndefinedField
-from setoml.settings import Settings
+from setoml.settings import BaseSettings
 
 
 def test_fields_filling():
-    class S(Settings):
+    class S(BaseSettings):
         p1: int = 0  # must be overwriten
         p2: int = 0  # has default value
         p3: int | None  # is optional
@@ -19,7 +19,7 @@ def test_fields_filling():
 
 
 def test_no_require_field():
-    class S(Settings):
+    class S(BaseSettings):
         p1: int  # fill from .toml
         p2: int | None  # is optional
         p3: int  # must raise exception
@@ -29,7 +29,7 @@ def test_no_require_field():
 
 
 def test_toml_types():
-    class S(Settings):
+    class S(BaseSettings):
         p_str: str
         p_int: int
         p_float: float
@@ -43,7 +43,7 @@ def test_toml_types():
 
 
 def test_cusom_app_name():
-    class S(Settings):
+    class S(BaseSettings):
         p: int
 
     s = S(app_name="custom_app_name", setting_files="tests/files/basic.toml").load()

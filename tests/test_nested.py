@@ -1,16 +1,16 @@
 import pytest
 
-from setoml.settings import Settings
+from setoml.settings import BaseSettings
 
 
 def test_simple_nested():
-    class S2(Settings):
+    class S2(BaseSettings):
         p1: int  # take value from .toml
         p2: int = 0  # must be overwriten
         p3: int = 0  # have default value
         p4: int | None  # is optional
 
-    class S1(Settings):
+    class S1(BaseSettings):
         p1: int  # take value from .toml
         p2: int = 0  # must be overwriten
         p3: int = 0  # have default value
@@ -18,7 +18,7 @@ def test_simple_nested():
 
         s2: S2
 
-    class S(Settings):
+    class S(BaseSettings):
         p1: int  # take value from .toml
         p2: int = 0  # must be overwriten
         p3: int = 0  # have default value
@@ -36,10 +36,10 @@ def test_simple_nested():
 
 
 def test_no_require_fields_level1():
-    class S1(Settings):
+    class S1(BaseSettings):
         no_in_toml: int
 
-    class S(Settings):
+    class S(BaseSettings):
         s1: S1
 
     with pytest.raises(Exception):
@@ -47,13 +47,13 @@ def test_no_require_fields_level1():
 
 
 def test_no_require_fields_level2():
-    class S2(Settings):
+    class S2(BaseSettings):
         no_in_toml: int
 
-    class S1(Settings):
+    class S1(BaseSettings):
         s2: S2
 
-    class S(Settings):
+    class S(BaseSettings):
         s1: S1
 
     with pytest.raises(Exception):
@@ -61,14 +61,14 @@ def test_no_require_fields_level2():
 
 
 def test_custom_app_name():
-    class S2(Settings):
+    class S2(BaseSettings):
         p1: int
 
-    class S1(Settings):
+    class S1(BaseSettings):
         p1: int
         level2: S2 = S2(app_name="s2")
 
-    class S(Settings):
+    class S(BaseSettings):
         p1: int
         level1: S1 = S1(app_name="s1")
 
@@ -79,14 +79,14 @@ def test_custom_app_name():
 
 
 def test_custom_filenames_in_nested():
-    class S2(Settings):
+    class S2(BaseSettings):
         p1: int
 
-    class S1(Settings):
+    class S1(BaseSettings):
         p1: int
         s2: S2 = S2(setting_files="tests/files/nested_part2.toml")
 
-    class S(Settings):
+    class S(BaseSettings):
         p1: int
         s1: S1
 

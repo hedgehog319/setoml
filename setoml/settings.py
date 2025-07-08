@@ -14,7 +14,7 @@ from setoml.utils import (
 )
 
 
-class Settings:
+class BaseSettings:
     _app_name: str | None
     _setting_files: PathsLike
     _secret_files: PathsLike
@@ -88,10 +88,10 @@ class Settings:
                 self._init_required(value, field)
 
     def _init_subsetting(self, value: Any, field: Field, settings: dict[str, Any]):
-        if isinstance(value, Settings):
+        if isinstance(value, BaseSettings):
             setting = value.load(settings)
         elif isinstance(value, dict):
-            if isinstance(field.default, Settings):
+            if isinstance(field.default, BaseSettings):
                 setting = field.default.load(settings)
             else:
                 setting = field.type().load(value)

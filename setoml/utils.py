@@ -47,8 +47,8 @@ def is_optional(field: Field) -> bool:
 
 
 def is_subsetting(value: Any, type_: type) -> bool:
-    from setoml import Settings
+    from setoml import BaseSettings
 
-    return any(issubclass(a, Settings) for a in _flat_annotations(type_)) and (
-        value is UndefinedField or isinstance(value, (dict, Settings))
+    return any(issubclass(a, BaseSettings) for a in _flat_annotations(type_)) and (
+        value is UndefinedField or isinstance(value, (dict, BaseSettings))
     )
