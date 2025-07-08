@@ -1,1 +1,1 @@
-from setoml.settings import Settings
+from setoml.settings import Settings as Settings

@@ -26,7 +26,7 @@ def test_simple_nested():
 
         s1: S1
 
-    s = S(file_names='tests/files/nested.toml').load()
+    s = S(setting_files="tests/files/nested.toml").load()
     assert s.p1 == 1
     assert s.p2 == 2
     assert s.s1.p1 == 3
@@ -43,7 +43,7 @@ def test_no_require_fields_level1():
         s1: S1
 
     with pytest.raises(Exception):
-        S(file_names='tests/files/nested.toml').load()
+        S(setting_files="tests/files/nested.toml").load()
 
 
 def test_no_require_fields_level2():
@@ -57,7 +57,7 @@ def test_no_require_fields_level2():
         s1: S1
 
     with pytest.raises(Exception):
-        S(file_names='/tests/files/nested.toml').load()
+        S(setting_files="/tests/files/nested.toml").load()
 
 
 def test_custom_app_name():
@@ -66,13 +66,13 @@ def test_custom_app_name():
 
     class S1(Settings):
         p1: int
-        level2: S2 = S2(app_name='s2')
+        level2: S2 = S2(app_name="s2")
 
     class S(Settings):
         p1: int
-        level1: S1 = S1(app_name='s1')
+        level1: S1 = S1(app_name="s1")
 
-    s = S(file_names='tests/files/nested.toml').load()
+    s = S(setting_files="tests/files/nested.toml").load()
     assert s.p1 == 1
     assert s.level1.p1 == 3
     assert s.level1.level2.p1 == 5
@@ -84,13 +84,13 @@ def test_custom_filenames_in_nested():
 
     class S1(Settings):
         p1: int
-        s2: S2 = S2(file_names='tests/files/nested_part2.toml')
+        s2: S2 = S2(setting_files="tests/files/nested_part2.toml")
 
     class S(Settings):
         p1: int
         s1: S1
 
-    s = S(file_names='tests/files/nested.toml').load()
+    s = S(setting_files="tests/files/nested.toml").load()
     assert s.p1 == 1
     assert s.s1.p1 == 3
     assert s.s1.s2.p1 == -1
